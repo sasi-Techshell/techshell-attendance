@@ -5,8 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     month: "short",
     year: "numeric"
   });
-
-  document.getElementById("todayDate").textContent = today;
   document.getElementById("todayDatePrint").textContent = today;
 
   const nameInput = document.getElementById("name");
@@ -61,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     noRecords.style.display = "none";
+
     entries.forEach((entry, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -94,7 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Validate login/logout only if status is Present
     if (status === "Present" && (!login || !logout)) {
       alert("Login and Logout times are required for Present status.");
       return;
@@ -104,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
     entries.push({ name, login, logout, total, status });
     renderEntries();
 
-    // Clear form
     nameInput.value = "";
     loginTimeInput.value = "";
     logoutTimeInput.value = "";
@@ -120,37 +117,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }).replace(/ /g, '-');
   }
 
-  function getPresentEntries() {
-    return entries.filter(e => e.status === "Present");
-  }
-
   document.getElementById("exportExcel").addEventListener("click", () => {
-    const presentEntries = getPresentEntries();
-    if (presentEntries.length === 0) {
-      alert("No Present entries to export.");
+    if (entries.length === 0) {
+      alert("No attendance data to export.");
       return;
     }
-    const ws = XLSX.utils.json_to_sheet(presentEntries);
+    const ws = XLSX.utils.json_to_sheet(entries);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Attendance");
     XLSX.writeFile(wb, `Attendance Report-${formatFileDate()}.xlsx`);
   });
 
   document.getElementById("exportPDF").addEventListener("click", () => {
-    const presentEntries = getPresentEntries();
-    if (presentEntries.length === 0) {
-      alert("No Present entries to export.");
+    const pdfContent = document.getElementById("pdf-content");
+
+    if (!pdfContent) {
+      alert("Content not found to export.");
       return;
     }
 
-    // Hide non-present rows temporarily for PDF
-    const rows = document.querySelectorAll("#entryList tr");
-    rows.forEach((row, i) => {
-      const status = entries[i]?.status;
-      row.style.display = status === "Present" ? "" : "none";
-    });
-
-    const pdfContent = document.getElementById("pdf-content");
     const opt = {
       margin: 0.3,
       filename: `Attendance Report-${formatFileDate()}.pdf`,
@@ -158,10 +143,8 @@ document.addEventListener("DOMContentLoaded", () => {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(pdfContent).save().then(() => {
-      // Restore all rows after PDF download
-      rows.forEach(row => row.style.display = "");
-    });
+
+    html2pdf().set(opt).from(pdfContent).save();
   });
 
   renderEntries();
