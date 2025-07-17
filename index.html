@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daily Attendance – TechShell</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="main.js"></script>
+
+  <style>
+    #pdf-content table, #pdf-content th, #pdf-content td {
+      border: 1px solid #000 !important;
+      border-collapse: collapse !important;
+    }
+    #pdf-content th, #pdf-content td {
+      padding: 8px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h2 class="text-center text-primary mb-3">✅ Daily Attendance – TechShell Software Pvt. Ltd</h2>
+    <p class="text-end">Date: <span id="todayDate"></span></p>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <input type="text" id="name" class="form-control" placeholder="Employee Name" />
+          </div>
+          <div class="col-md-2">
+            <input type="time" id="loginTime" class="form-control" />
+          </div>
+          <div class="col-md-2">
+            <input type="time" id="logoutTime" class="form-control" />
+          </div>
+          <div class="col-md-3">
+            <select id="status" class="form-select">
+              <option value="">Select Status</option>
+              <option value="Present">Present</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Casual Leave">Casual Leave</option>
+              <option value="Personal Leave">Personal Leave</option>
+              <option value="Just Not Attend">Just Not Attend</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button id="addBtn" class="btn btn-primary w-100">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3 text-end d-print-none">
+      <button id="exportExcel" class="btn btn-success me-2"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+      <button id="exportPDF" class="btn btn-danger"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+    </div>
+
+    <div class="container mt-4">
+      <div id="pdf-content">
+        <h2 class="text-center text-primary mb-3">✅ Daily Attendance – TechShell Software Pvt. Ltd</h2>
+        <div class="d-flex justify-content-center mb-3">
+          <h4 class="me-2">Daily Attendance Report:</h4>
+          <h4 class="text-white px-2" style="background-color: rgb(255, 58, 58);">
+            Date: <span id="todayDatePrint"></span>
+          </h4>
+        </div>
+        <table class="table table-bordered table-striped w-100">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Login</th>
+              <th>Logout</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th class="d-print-none text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="entryList"></tbody>
+        </table>
+        <p id="noRecords" class="text-center">No attendance records found.</p>
+      </div>
+    </div>
+  </div>
+  </body>
+  </html>
