@@ -14,15 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const addBtn = document.getElementById("addBtn");
   const entryList = document.getElementById("entryList");
   const noRecords = document.getElementById("noRecords");
+  const exportExcelBtn = document.getElementById("exportExcel");
+  const exportPDFBtn = document.getElementById("exportPDF");
 
   let entries = [];
 
+  // Utilities
   function formatTimeTo12Hour(timeStr) {
     if (!timeStr) return "";
     const [hour, minute] = timeStr.split(":").map(Number);
     const date = new Date();
-    date.setHours(hour);
-    date.setMinutes(minute);
+    date.setHours(hour, minute);
     return date.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
@@ -41,48 +43,60 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${hours}h ${minutes}m`;
   }
 
-  function statusBadge(status) {
-    const map = {
+  function statusBadgeClass(status) {
+    const classes = {
       "Present": "bg-success",
       "Sick Leave": "bg-warning text-dark",
       "Casual Leave": "bg-info text-dark",
       "Personal Leave": "bg-primary",
       "Just Not Attend": "bg-danger"
     };
-    return `badge ${map[status] || 'bg-secondary'}`;
+    return `badge ${classes[status] || 'bg-secondary'}`;
   }
 
+  function formatFileDate() {
+    return new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).replace(/ /g, "-");
+  }
+
+  // Rendering
   function renderEntries() {
     entryList.innerHTML = "";
-    if (entries.length === 0) {
-      noRecords.style.display = "block";
-      return;
-    }
-    noRecords.style.display = "none";
+    noRecords.style.display = entries.length === 0 ? "block" : "none";
 
-    entries.forEach((entry, i) => {
+    entries.forEach((entry, index) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${i + 1}</td>
+        <td>${index + 1}</td>
         <td>${entry.name}</td>
         <td>${formatTimeTo12Hour(entry.login)}</td>
         <td>${formatTimeTo12Hour(entry.logout)}</td>
-        <td>${entry.total || '-'}</td>
-        <td><span class="badge ${statusBadge(entry.status)}">${entry.status}</span></td>
+        <td>${entry.total || "-"}</td>
+        <td><span class="${statusBadgeClass(entry.status)}">${entry.status}</span></td>
         <td class="d-print-none text-center">
-          <button class="btn btn-sm btn-danger" onclick="deleteEntry(${i})">Delete</button>
+          <button class="btn btn-sm btn-danger" data-index="${index}">Delete</button>
         </td>
       `;
       entryList.appendChild(tr);
     });
+
+    // Attach delete listeners
+    document.querySelectorAll("button[data-index]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const index = parseInt(btn.getAttribute("data-index"));
+        entries.splice(index, 1);
+        renderEntries();
+      });
+    });
   }
 
-  window.deleteEntry = (index) => {
-    entries.splice(index, 1);
-    renderEntries();
-  };
+  // Handlers
+  addBtn.addEventListener("click", (e) => {
+    e.preventDefault();
 
-  addBtn.addEventListener("click", () => {
     const name = nameInput.value.trim();
     const login = loginTimeInput.value;
     const logout = logoutTimeInput.value;
@@ -99,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const total = (status === "Present") ? calculateTotalTime(login, logout) : "";
+
     entries.push({ name, login, logout, total, status });
     renderEntries();
 
@@ -108,27 +123,19 @@ document.addEventListener("DOMContentLoaded", () => {
     statusInput.value = "";
   });
 
-  function formatFileDate() {
-    const date = new Date();
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
-    }).replace(/ /g, '-');
-  }
-
-  document.getElementById("exportExcel").addEventListener("click", () => {
+  exportExcelBtn.addEventListener("click", () => {
     if (entries.length === 0) {
       alert("No attendance data to export.");
       return;
     }
-    const ws = XLSX.utils.json_to_sheet(entries);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-    XLSX.writeFile(wb, `Attendance Report-${formatFileDate()}.xlsx`);
+
+    const worksheet = XLSX.utils.json_to_sheet(entries);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+    XLSX.writeFile(workbook, `Attendance Report-${formatFileDate()}.xlsx`);
   });
 
-  document.getElementById("exportPDF").addEventListener("click", () => {
+  exportPDFBtn.addEventListener("click", () => {
     const pdfContent = document.getElementById("pdf-content");
 
     if (!pdfContent) {
@@ -136,16 +143,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const opt = {
+    const options = {
       margin: 0.3,
       filename: `Attendance Report-${formatFileDate()}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
     };
 
-    html2pdf().set(opt).from(pdfContent).save();
+    html2pdf().set(options).from(pdfContent).save();
   });
 
+  // Initial render
   renderEntries();
 });
